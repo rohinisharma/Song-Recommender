@@ -39,8 +39,8 @@ def add_like():
     song_id = add_song_to_db(song_metadata)
     add_like_to_db(song_id)
     return "<p>Adding {song} by {artist}<p>".format(song = resp["track"]["name"], artist = resp["track"]["artist"]["name"])
-
-
+    
+    
 # @app.route('remove_like', method='POST')
 # def remove_like():
 #     #Given song name remove it from likes if it is liked, if it is not liked show error message
@@ -49,17 +49,9 @@ def add_like():
 # def get_likes_for_user():
 #     #Given a username get their likes
 
-@app.route('add_user', method='POST')
-def add_user(metadata):
-    cursor = mydb.cursor()
-    #Adds a user to the DB
-    sql = "INSERT INTO Users (firstName,lastName) VALUES (%s, %s)"
-    cursor.execute(sql, metadata)
-    user_id = cursor.lastrowid
-    mydb.commit()
-    cursor.close()
-    return user_id
-
+# @app.route('add_user', method='POST')
+# def add_user():
+#     #Adds a user to the DB
 def get_metadata_from_resp(resp):
     name = resp["track"]["name"]
     duration = resp["track"]["duration"]
