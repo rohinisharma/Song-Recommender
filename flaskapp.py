@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, redirect, url_for
 import flask
 import wtforms
 import requests
@@ -11,7 +11,7 @@ app.config['SECRET_KEY'] = 'secret key'
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="lionking",
+  password="",
   database="song_recommender"
 )
 mb.set_useragent(
@@ -28,7 +28,8 @@ LAST_FM= "http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key={api}&a
 def index():
     if 'add' in request.form:
         return flask.render_template("./add_song.html")
-    
+    if 'list' in request.form:
+        return redirect(url_for('get_likes'))
     elif request.method == 'GET':
         return flask.render_template("./index.html")
 
@@ -39,12 +40,33 @@ def add_like():
     url = "{last_fm}&artist={artist}&track={title}&format=json".format(last_fm = LAST_FM, artist = form["artist"], title = form["title"])
     r = requests.get(url)
     resp = r.json()
-    song_metadata = get_metadata_from_resp(resp)
-    song_id = add_song_to_db(song_metadata)
-    add_like_to_db(song_id)
-    return "<p>Adding {song} by {artist}<p>".format(song = resp["track"]["name"], artist = resp["track"]["artist"]["name"])
+    if "error" in resp:
+        message = "Sorry, we couldn't find that song!"
+    else:
+        song_metadata = get_metadata_from_resp(resp)
+        song_id = add_song_to_db(song_metadata)
+        add_like_to_db(song_id)
+        message = "Added {song} by {artist}".format(song = resp["track"]["name"], artist = resp["track"]["artist"]["name"])
+    return flask.render_template("./add_song.html", message=message)
 
-@app.route('/add_user', methods=['POST'])
+
+@app.route('/get_likes', methods = ['GET'])
+def get_likes():
+    #TODO get logged in user
+    cursor = mydb.cursor()
+    sql = "SELECT SongId FROM Likes WHERE Username = %s"
+    val = ('rsharma',)
+    cursor.execute(sql,val)
+    result = cursor.fetchall()
+    songs = []
+    for r in result: 
+        sql = "SELECT * FROM Songs WHERE SongId = %s"
+        cursor.execute(sql,r)
+        result = cursor.fetchone()
+        songs.append(result)
+    cursor.close()
+    return flask.render_template("./liked_songs.html", likes= songs)
+
 def add_user(metadata):
     cursor = mydb.cursor()
     #Adds a user to the DB
@@ -57,9 +79,15 @@ def add_user(metadata):
 
 def get_metadata_from_resp(resp):
     name = resp["track"]["name"]
-    duration = resp["track"]["duration"]
     artist = resp["track"]["artist"]["name"]
-    tag = resp["track"]["toptags"]["tag"][0]["name"]
+    if "duration" not in resp['track'] or resp["track"]["duration"] == "0":
+        duration = None 
+    else:
+        duration = resp["track"]["duration"]
+    if len(resp["track"]["toptags"]["tag"]) < 1:
+        tag = None
+    else:
+        tag = resp["track"]["toptags"]["tag"][0]["name"]
     return (name, artist, duration, tag)
 
 def add_song_to_db(metadata):
@@ -85,7 +113,6 @@ def add_like_to_db(song_id):
     cursor.execute(sql, val)
     mydb.commit()
     cursor.close()
-
 
 if __name__ == '__main__':
     app.run(debug=True)
