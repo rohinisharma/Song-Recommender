@@ -11,7 +11,7 @@ app.config['SECRET_KEY'] = 'secret key'
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="",
+  password="lionking",
   database="song_recommender"
 )
 mb.set_useragent(
@@ -24,9 +24,13 @@ LAST_FM= "http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key={api}&a
 
 
 
-@app.route('/')
-def hello_world():
-    return flask.render_template("./index.html")
+@app.route('/', methods = ['GET','POST'])
+def index():
+    if 'add' in request.form:
+        return flask.render_template("./add_song.html")
+    
+    elif request.method == 'GET':
+        return flask.render_template("./index.html")
 
 @app.route('/add_like', methods = ['POST'])
 def add_like():
@@ -40,16 +44,7 @@ def add_like():
     add_like_to_db(song_id)
     return "<p>Adding {song} by {artist}<p>".format(song = resp["track"]["name"], artist = resp["track"]["artist"]["name"])
 
-
-# @app.route('remove_like', method='POST')
-# def remove_like():
-#     #Given song name remove it from likes if it is liked, if it is not liked show error message
-
-# @app.route('get_likes', method='GET')
-# def get_likes_for_user():
-#     #Given a username get their likes
-
-@app.route('add_user', method='POST')
+@app.route('/add_user', methods=['POST'])
 def add_user(metadata):
     cursor = mydb.cursor()
     #Adds a user to the DB
@@ -69,8 +64,14 @@ def get_metadata_from_resp(resp):
 
 def add_song_to_db(metadata):
     cursor = mydb.cursor()
-    # TODO check for duplicates
-    sql = "INSERT INTO Songs (title,artist,duration,tag) VALUES (%s, %s, %s, %s)"
+    sql = "SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s"
+    val = (metadata[0], metadata[1])
+    cursor.execute(sql, val)
+    result = cursor.fetchall()
+    if len(result) > 0:
+        print(result)
+        return result[0][0]
+    sql = "INSERT INTO Songs (Title,Artist,Duration,Tag) VALUES (%s, %s, %s, %s)"
     cursor.execute(sql, metadata)
     song_id = cursor.lastrowid
     mydb.commit()
@@ -79,7 +80,7 @@ def add_song_to_db(metadata):
 
 def add_like_to_db(song_id):
     cursor = mydb.cursor()
-    sql = "INSERT INTO Likes (SongId, Username) VALUES (%s,%s)"
+    sql = "INSERT IGNORE INTO Likes (SongId, Username) VALUES (%s,%s)"
     val = (song_id, "rsharma")
     cursor.execute(sql, val)
     mydb.commit()
@@ -87,4 +88,4 @@ def add_like_to_db(song_id):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
