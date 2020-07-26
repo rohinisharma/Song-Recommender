@@ -11,7 +11,7 @@ app.config['SECRET_KEY'] = 'secret key'
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="",
+  password="lionking",
   database="song_recommender"
 )
 mb.set_useragent(
@@ -34,25 +34,26 @@ def index():
         return flask.render_template("./index.html")
 
 @app.route('/add_like', methods = ['POST'])
-def add_like():
-    #TODO validate form
-    form = request.form
-    url = "{last_fm}&artist={artist}&track={title}&format=json".format(last_fm = LAST_FM, artist = form["artist"], title = form["title"])
-    r = requests.get(url)
-    resp = r.json()
-    if "error" in resp:
-        message = "Sorry, we couldn't find that song!"
-    else:
-        song_metadata = get_metadata_from_resp(resp)
-        song_id = add_song_to_db(song_metadata)
-        add_like_to_db(song_id)
-        message = "Added {song} by {artist}".format(song = resp["track"]["name"], artist = resp["track"]["artist"]["name"])
-    return flask.render_template("./add_song.html", message=message)
 
 
-@app.route('/get_likes', methods = ['GET'])
+@app.route('/get_likes', methods = ['GET','POST'])
 def get_likes():
     #TODO get logged in user
+    if request.method == 'POST':
+        #TODO validate form
+        form = request.form
+        if 'remove' in form:
+            message = remove_like(form['title'],form['artist'])
+        elif 'add' in form:
+            if form['tag'] == '':
+                tag = None
+            else:
+                tag = form['tag']
+            message = add_like(form['title'],form['artist'], tag)
+        elif 'tag' in form:
+            message = update_tag(form['title'], form['artist'],form['tag'])
+    else:
+        message = ''
     cursor = mydb.cursor()
     sql = "SELECT SongId FROM Likes WHERE Username = %s"
     val = ('rsharma',)
@@ -65,7 +66,50 @@ def get_likes():
         result = cursor.fetchone()
         songs.append(result)
     cursor.close()
-    return flask.render_template("./liked_songs.html", likes= songs)
+    return flask.render_template("./liked_songs.html", likes= songs, message=message)
+
+
+def remove_like(title, artist):
+    #TODO: get logged in user
+    form = request.form
+    cursor = mydb.cursor()
+    sql = "SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s"
+    val = (title, artist)
+    cursor.execute(sql, val)
+    result = cursor.fetchone()
+    if result == None:
+        return "Sorry, you haven't liked that song!"
+    sql = "DELETE FROM Likes WHERE SongId = %s AND Username = %s"
+    val = (result[0], 'rsharma')
+    cursor.execute(sql, val)
+    mydb.commit()
+    cursor.close()
+    return "Removed {title} by {artist} from your likes.".format(title= title, artist=artist)
+
+def add_like(title, artist, tag):
+    #TODO get logged in user
+    cursor = mydb.cursor()
+    sql = "SELECT * FROM Likes l, (SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s) temp WHERE l.SongId = temp.SongId AND l.Username = %s"
+    val = (title, artist, 'rsharma')
+    cursor.execute(sql,val)
+    result = cursor.fetchall()
+    print(result)
+    if len(result) > 0:
+        return "You have already liked this song!"
+    url = "{last_fm}&artist={artist}&track={title}&format=json".format(last_fm = LAST_FM, artist = artist, title = title)
+    r = requests.get(url)
+    resp = r.json()
+    if "error" in resp:
+        return "Sorry, we couldn't find that song!"
+    song_metadata = get_metadata_from_resp(resp)
+    song_id = add_song_to_db(song_metadata, tag)
+    add_like_to_db(song_id)
+    message = "Added {song} by {artist}".format(song = resp["track"]["name"], artist = resp["track"]["artist"]["name"])
+    return message
+
+
+
+
 
 def add_user(metadata):
     cursor = mydb.cursor()
@@ -90,7 +134,7 @@ def get_metadata_from_resp(resp):
         tag = resp["track"]["toptags"]["tag"][0]["name"]
     return (name, artist, duration, tag)
 
-def add_song_to_db(metadata):
+def add_song_to_db(metadata, tag):
     cursor = mydb.cursor()
     sql = "SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s"
     val = (metadata[0], metadata[1])
@@ -100,7 +144,11 @@ def add_song_to_db(metadata):
         print(result)
         return result[0][0]
     sql = "INSERT INTO Songs (Title,Artist,Duration,Tag) VALUES (%s, %s, %s, %s)"
-    cursor.execute(sql, metadata)
+    if tag == None:
+        cursor.execute(sql, metadata)
+    else:
+        vals = (metadata[0], metadata[1], metadata[2], tag)
+        cursor.execute(sql, vals)
     song_id = cursor.lastrowid
     mydb.commit()
     cursor.close()
@@ -113,6 +161,24 @@ def add_like_to_db(song_id):
     cursor.execute(sql, val)
     mydb.commit()
     cursor.close()
+
+def update_tag(title, artist, new_tag):
+    #TODO update tag not globally
+    cursor = mydb.cursor()
+    sql = "SELECT Tag FROM Songs WHERE Title = %s AND Artist = %s"
+    val = (title, artist)
+    cursor.execute(sql, val)
+    result = cursor.fetchone()
+    if result == None:
+        return "Sorry, you haven't liked that song!" 
+    sql = "UPDATE Songs SET Tag = %s WHERE Title = %s AND Artist = %s"
+    val = (new_tag, title, artist)
+    cursor.execute(sql,val)
+    mydb.commit()
+    cursor.close()
+    message = "Changed tag for {title} by {artist} from {old} to {new}".format(title=title, artist=artist, old=result[0], new=new_tag)
+    return message
+
 
 if __name__ == '__main__':
     app.run(debug=True)

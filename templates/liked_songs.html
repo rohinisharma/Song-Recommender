@@ -1,7 +1,17 @@
 <!DOCTYPE html>
+
+
+<body>
 <h1>Your Likes:</h1>
-<table id="table">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css">
+<link rel = "stylesheet" href="/static/likes_style.css">
+<button id="button">Row count</button>
+<table id="dtable" class="display" style="width:100%">
     <thead>
+    
     <tr>
         <th>Title</th>
         <th>Artist</th>
@@ -20,4 +30,39 @@
         {% endfor %} 
     </tbody>
 </table>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.3.1/js/dataTables.select.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+    $('#dtable').DataTable();
+    var table = $('#example').DataTable();
+    $('#dtable tbody').on( 'click', 'tr', function () {
+        $(this).toggleClass('selected');
+    } );
+    $('#button').click( function () {
+        var oData = table.rows('.selected').data();
+        for (var i=0; i < oData.length ;i++){
+       alert("Name: " + oData[i][0] + " Position: " + oData[i][1] + " Office: " + oData[i][2]);
+    }
+    } );
+} );
+    </script>
+<form action="/get_likes" method="POST">
+    <label for = "title">Song Title:</label>
+    <input type = "text" id ="title" name="title">
+    <label for = "artist">Artist:</label>
+    <input type = "text" id="artist" name="artist">
+    <label for="tag">Tag:</label>
+    <input type="text" id="tag" name="tag">
+    <div>
+        <input type="submit" name= 'remove' value="Remove song from likes">
+        <input type="submit" name = 'add' value = 'Add song to likes'>
+        <input type="submit" name="tag" value = "Change tag for song">
+    </div>
+    
+</form>
+<p>{{message}}</p>
+ </body>
 </html>
