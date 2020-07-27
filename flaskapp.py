@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, json
 import flask
 import wtforms
 import requests
@@ -42,9 +42,7 @@ def get_likes():
     if request.method == 'POST':
         #TODO validate form
         form = request.form
-        if 'remove' in form:
-            message = remove_like(form['title'],form['artist'])
-        elif 'add' in form:
+        if 'add' in form:
             if form['tag'] == '':
                 tag = None
             else:
@@ -68,8 +66,15 @@ def get_likes():
     cursor.close()
     return flask.render_template("./liked_songs.html", likes= songs, message=message)
 
+@app.route('/remove_like', methods=['POST'])
+def remove_like():
+    data = json.loads(request.data)
+    for d in data:
+        remove_like_from_db(d[0], d[1])
+    return "hi"
 
-def remove_like(title, artist):
+
+def remove_like_from_db(title, artist):
     #TODO: get logged in user
     form = request.form
     cursor = mydb.cursor()
@@ -77,14 +82,12 @@ def remove_like(title, artist):
     val = (title, artist)
     cursor.execute(sql, val)
     result = cursor.fetchone()
-    if result == None:
-        return "Sorry, you haven't liked that song!"
     sql = "DELETE FROM Likes WHERE SongId = %s AND Username = %s"
     val = (result[0], 'rsharma')
     cursor.execute(sql, val)
     mydb.commit()
     cursor.close()
-    return "Removed {title} by {artist} from your likes.".format(title= title, artist=artist)
+    
 
 def add_like(title, artist, tag):
     #TODO get logged in user
