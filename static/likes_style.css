@@ -36,6 +36,11 @@ div {
     padding-top: 10px;
 }
 
+button {
+    text-align: center;
+    align-self: center;
+}
+
 P {
     text-align: center;
 }
