@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/index.css">
+</head>
+
+<body>
+    <h1>Your Recommendations</h1>
+    <form action="/" method="get">
+        <button name="home" type="submit">Home</button>
+    </form>
+    <form action = '/generate_rec' method = 'POST'>
+        <input type = "submit" tag = "generate" value="Generate Recommendation">
+    </form>
+   <h3>{{message}}</h3>
+    
+
+</body>
+
+</html>
