@@ -53,7 +53,7 @@ def login():
 
     if form.validate_on_submit():
         cursor = mydb.cursor()
-        sql = "SELECT Username,Password FROM UserDetails WHERE Username = %s"
+        sql = "SELECT Username,Password FROM Users WHERE Username = %s"
         val = (form.username.data,)
         cursor.execute(sql,val)
         result = cursor.fetchone()
