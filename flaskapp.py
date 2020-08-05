@@ -148,15 +148,15 @@ def get_likes():
         sql = "SELECT * FROM Songs WHERE SongId = %s"
         cursor.execute(sql,r)
         
-        result = cursor.fetchone()
+        song_result = cursor.fetchone()
+        print(song_result)
         tag_sql = "SELECT Tag FROM Tags WHERE SongId = %s AND Username = %s"
         val = (r[0],session.get('user'))
         cursor.execute(tag_sql,val)
         tag = cursor.fetchone()
         if tag != None:
-            result = (result[0], result[1], result[2], result[3], tag[0])
-            print(result)
-        songs.append(result)
+            song_result = (song_result[0], song_result[1],song_result[2],  tag[0])
+        songs.append(song_result)
         cursor.reset()
     cursor.close()
     return flask.render_template("./liked_songs.html", likes= songs, message=message)
@@ -290,7 +290,7 @@ def update_tag(title, artist, new_tag):
     cursor.execute(sql,val)
     result = cursor.fetchone()
     if result == None:
-        sql = "INSERT INTO Tags VALUES(%s,%s,%s)"
+        sql = "INSERT INTO Tags(Username, SongId, Tag) VALUES(%s,%s,%s)"
         val = (user, song, new_tag)
         cursor.execute(sql,val)
         mydb.commit()
