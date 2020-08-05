@@ -1,40 +1,71 @@
 <!DOCTYPE html>
-
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{url_for('.static', filename='dashboard.css')}}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css">
+    <link rel = "stylesheet" href="/static/likes_style.css">
+</head>
 
 <body>
 <h1>Your Likes:</h1>
+<p>Enter a song, artist and optionally a tag to add them to your liked songs. <br>Tags are set by default through the last fm API. If you want to update a tag, type the song, artist, and new tag, then click change tag for song.</p>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Song Recommender</a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="get_likes">Dashboard</a></li>>
+          <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css">
-<link rel = "stylesheet" href="/static/likes_style.css">
-<form action="/" method="get">
-    <button name="home" type="submit">Home</button>
-</form>
-<table id="dtable" class="display" style="width:100%">
-    <thead>
-    
-    <tr>
-        <th>Title</th>
-        <th>Artist</th>
-        <th>Duration</th>
-        <th>Genre/Tag</th>
-    </tr>
-    </thead>
-    <tbody>
-        {% for row in likes %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-3 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+          <li class="active"><a href="#">Your Likes<span class="sr-only">(current)</span></a></li>
+          <li><a href="show_recs">Recommendations</a></li>
+          <li><a href="analytics">Analytics</a></li>
+        </ul>
+      </div>
+
+      <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <table id="dtable" class="display" style="width:100%">
+            <thead>
+            
             <tr>
-                <td>{{row[1]}}</td>
-                <td>{{row[2]}}</td>
-                <td>{{row[3]}}</td>
-                <td>{{row[4]}}</td>
+                <th>Title</th>
+                <th>Artist</th>
+                <th>Genre/Tag</th>
             </tr>
-        {% endfor %} 
-    </tbody>
-</table>
-<div>
-    <button id='remove'>Remove selected likes</button>
-</div>
+            </thead>
+            <tbody>
+                {% for row in likes %}
+                    <tr>
+                        <td>{{row[1]}}</td>
+                        <td>{{row[2]}}</td>
+                        <td>{{row[3]}}</td>
+                    </tr>
+                {% endfor %} 
+            </tbody>
+        </table>
+        <div>
+            <button id='remove'>Remove selected likes</button>
+        </div>
+      </div>
+
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
@@ -53,7 +84,7 @@
             contentType: 'application/json',
             data:JSON.stringify(table.rows('.selected').data().toArray()),
             success: function(response) {
-                location.reload(true);
+                location.href= 'get_likes'
                 $('#message').html(response);
             }
         });

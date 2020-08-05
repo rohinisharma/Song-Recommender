@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" href="{{url_for('.static', filename='dashboard.css')}}">
+</head>
+
+<body>
+    <h1>Your Recommendations</h1>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Song Recommender</a>
+          </div>
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="get_likes">Dashboard</a></li>
+              <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+              <li><a href="get_likes">Your Likes</a></li>
+              <li class="active"><a href="#">Recommendations<span class="sr-only">(current)</span></a></li>
+              <li><a href="analytics">Analytics</a></li>
+            </ul>
+          </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <form action = '/generate_rec' method = 'POST'>
+        <input type = "submit" tag = "generate" value="Generate Recommendation">
+    </form>
+   <h3>{{message}}</h3>
+    </div>
+    
+    
+
+</body>
+
+</html>
