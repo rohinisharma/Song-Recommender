@@ -3,7 +3,6 @@ import flask
 import wtforms
 import requests
 import random
-import musicbrainzngs as mb
 from collections import Counter
 from flask_wtf import FlaskForm
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -18,14 +17,10 @@ bootstrap = Bootstrap(app)
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="lionking",
+  password="cs411",
   database="song_recommender"
 )
-mb.set_useragent(
-    "song-recommender",
-    "0.1",
-    "https://github.com/rohinisharma/Song-Recommender",
-)
+
 API_KEY = "f3cf3efb1ef7e50dad9926b3c9d4263e"
 LAST_FM= "http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key={api}&autocorrect=1".format(api = API_KEY)
 
@@ -77,19 +72,23 @@ def signup():
     if form.validate_on_submit():
         hashed_password = generate_password_hash(form.password.data, method='sha256')
         cursor = mydb.cursor()
-        sql = "INSERT INTO UserDetails (Username, Password, Email, Age) VALUES(%s, %s, %s, %s)"
+        sql = "SELECT * FROM Users WHERE Username = %s"
+        val = (form.username.data,)
+        cursor.execute(sql,val)
+        result = cursor.fetchone()
+        print(result)
+        if len(result) != None: 
+           return flask.render_template('signup.html', form=form, message="This username already exists. Please pick another") 
+
+        sql = "INSERT INTO Users (Username, Password, Email, Age) VALUES(%s, %s, %s, %s)"
         val = (form.username.data, hashed_password, form.email.data, form.age.data)
         cursor.execute(sql,val)
         mydb.commit()
         cursor.close()
-        # new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-        # db.session.add(new_user)
-        # db.session.commit()
+        session['user'] = form.username.data
+        return redirect(url_for('get_likes'))
 
-        return '<h1>New user has been created!</h1>'
-        #return '<h1>' + form.username.data + ' ' + form.email.data + ' ' + form.password.data + '</h1>'
-
-    return flask.render_template('signup.html', form=form)
+    return flask.render_template('signup.html', form=form, message="")
 
 @app.route('/show_recs', methods = ['GET','POST'])
 def show_recs():
