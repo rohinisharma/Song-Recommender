@@ -77,7 +77,7 @@ def signup():
         cursor.execute(sql,val)
         result = cursor.fetchone()
         print(result)
-        if len(result) != None: 
+        if result != None: 
            return flask.render_template('signup.html', form=form, message="This username already exists. Please pick another") 
 
         sql = "INSERT INTO Users (Username, Password, Email, Age) VALUES(%s, %s, %s, %s)"
@@ -270,14 +270,14 @@ def add_like_to_db(song_id):
 def update_tag(title, artist, new_tag):
     #TODO update tag not globally
     cursor = mydb.cursor()
-    sql = "SELECT SongId,Tag FROM Songs WHERE Title = %s AND Artist = %s"
+    sql = "SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s"
     val = (title, artist)
     cursor.execute(sql, val)
     result = cursor.fetchone()
     user = session.get('user')
-    song = result[0]
     if result == None:
         return "Sorry, you haven't liked that song!" 
+    song = result[0]
     sql = "SELECT * FROM Tags WHERE SongId = %s AND Username = %s"
     val = (song, user)
     cursor.execute(sql,val)
