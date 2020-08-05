@@ -249,9 +249,10 @@ def add_song_to_db(metadata):
     sql = "SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s"
     val = (metadata[0], metadata[1])
     cursor.execute(sql, val)
-    result = cursor.fetchall()
-    if len(result) > 0:
-        return result[0][0]
+    result = cursor.fetchone()
+    cursor.reset()
+    if result != None:
+        return result[0]
     sql = "INSERT INTO Songs (Title,Artist,Tag) VALUES (%s, %s, %s)"
     cursor.execute(sql, metadata)
     song_id = cursor.lastrowid
@@ -278,6 +279,12 @@ def update_tag(title, artist, new_tag):
     if result == None:
         return "Sorry, you haven't liked that song!" 
     song = result[0]
+    sql = "SELECT * FROM Likes WHERE SongId = %s AND Username = %s"
+    val = (song, user)    
+    cursor.execute(sql, val)
+    like_result = cursor.fetchone()
+    if like_result == None:
+        return "Sorry, you haven't liked that song!" 
     sql = "SELECT * FROM Tags WHERE SongId = %s AND Username = %s"
     val = (song, user)
     cursor.execute(sql,val)
