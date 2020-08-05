@@ -70,6 +70,7 @@ def signup():
     form = RegisterForm()
 
     if form.validate_on_submit():
+        print(form.username.data)
         hashed_password = generate_password_hash(form.password.data, method='sha256')
         cursor = mydb.cursor()
         sql = "SELECT * FROM Users WHERE Username = %s"
@@ -103,7 +104,7 @@ def generate_rec():
     user = session.get('user')
     if get_total_num_likes(user) < 5:
         return flask.render_template('recommendations.html', message = 'Please add more likes to get recommendations.')
-    if session.get('recs') == None:
+    if session.get('recs') == None or len(session.get('seen')) == 0:
         generate_recommendations(session.get('user'))
     recs = session.get('recs')
     if len(recs) == 0:
@@ -202,7 +203,6 @@ def get_liked_songs():
     
 
 def remove_like_from_db(title, artist):
-    form = request.form
     cursor = mydb.cursor()
     sql = "SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s"
     val = (title, artist)
@@ -216,7 +216,6 @@ def remove_like_from_db(title, artist):
     
 
 def add_like(title, artist):
-    #TODO get logged in user
     cursor = mydb.cursor()
     sql = "SELECT * FROM Likes l, (SELECT SongId FROM Songs WHERE Title = %s AND Artist = %s) temp WHERE l.SongId = temp.SongId AND l.Username = %s"
     val = (title, artist, session.get('user'))
@@ -325,6 +324,10 @@ def generate_recommendations(user_id):
         val = (top_tag,user_id)
         cursor.execute(sql,val)
         result = cursor.fetchall()
+        if len(result) == 0:
+            random_song_sql = "SELECT SongId FROM Songs ORDER BY RAND() LIMIT 10"
+            cursor.execute(random_song_sql)
+            result = cursor.fetchall()
         session['recs'] = result
         return
     scores = {}
