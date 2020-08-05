@@ -4,11 +4,9 @@ import wtforms
 import requests
 import random
 import musicbrainzngs as mb
-from form import SongForm
 from collections import Counter
 from flask_wtf import FlaskForm
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_bootstrap import Bootstrap
 from wtforms import StringField, PasswordField, BooleanField, IntegerField
 from wtforms.validators import InputRequired, Email, Length
@@ -16,9 +14,6 @@ import mysql.connector
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret key'
 bootstrap = Bootstrap(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
 
 mydb = mysql.connector.connect(
   host="localhost",
@@ -44,10 +39,7 @@ class RegisterForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired(), Length(min=8, max=80)])
     age = IntegerField('Age', validators=[InputRequired()])
 
-@login_manager.user_loader
-def load_user(username):
-    session['user'] = username
-    return username
+
 
 @app.route('/', methods = ['GET','POST'])
 def index():
